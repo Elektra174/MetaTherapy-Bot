@@ -6,22 +6,40 @@ MPT Therapist is an AI-powered chatbot designed to assist psychologists practici
 
 ## Recent Changes
 
+**December 5, 2024 - Replit Environment Setup (GitHub Import)**
+- Created missing `shared/schema.ts` with all TypeScript types and Zod schemas
+- Added `.gitignore` with proper Node.js exclusions
+- Installed all npm dependencies
+- Provisioned PostgreSQL database and pushed schema using Drizzle
+- Configured workflow "Start application" to run dev server on port 5000
+- Set up deployment configuration for autoscale deployment target
+- Verified frontend loads correctly with Vite proxy configuration for Replit environment
+- Application requires `CEREBRAS_API_KEY` secret (now configured and working)
+- Server properly configured to bind to `0.0.0.0:5000` with `allowedHosts: true`
+- All systems operational and ready for use
+
+**December 5, 2024 - Comprehensive MPT Knowledge Base Integration**
+- Added 24 complete MPT scripts from uploaded knowledge base document (база знаний мпт):
+  - Session scripts: Скрипт первой сессии, Исследование стратегии, 5 условий запроса, 7 базовых принципов
+  - Body/emotion work: Работа с телесными ощущениями, Работа с эмоциями, Исследование телесной блокировки
+  - Shadow work: Теневое желание, Светлая тень, Работа с архетипами
+  - Fear transformation: Исследование страха, Трансформация страха денег, Богатый человек
+  - Belief work: Исследование убеждения, Надо и Хочу, Мотивация эталонного состояния
+  - Integration: Ресурсная метапозиция, Интеграция и новые действия, Практики внедрения
+  - Trance protocols: Транс "Тайное сокровище", Техника погружения, Исследование сопротивления
+  - Additional: О методе МПТ, Помогающие вопросы, Страхи психолога, Привычная идентичность
+- Strengthened AI system prompts with strict MPT methodology adherence
+- Added explicit rules: ONE question at a time, short responses (2-3 sentences), forbidden actions
+- Fixed knowledge base dialog content display when scripts are expanded
+- Added auto-focus to chat input after sending messages
+- Application fully functional with Russian UI
+
 **December 5, 2024 - Script Management System**
 - Added PostgreSQL-backed custom script storage (`custom_scripts` table)
 - Created script storage API with CRUD endpoints (`/api/knowledge-base`)
 - Scripts distinguished by `isCustom` flag (static vs user-added)
 - Chat uses combined static + custom scripts for AI responses
 - Knowledge base dialog updated with add/delete functionality for custom scripts
-
-**December 5, 2024 - Replit Environment Setup**
-- Created missing `shared/schema.ts` with all TypeScript types and Zod schemas
-- Added `.gitignore` with proper Node.js exclusions
-- Configured workflow to run dev server on port 5000
-- Set up deployment configuration for autoscale with build and start commands
-- Verified frontend loads correctly with proxy configuration for Replit environment
-- Application requires `CEREBRAS_API_KEY` secret (configured)
-- **Updated AI prompt to ask questions one at a time** (not all at once)
-- **Shortened AI responses to 2-3 sentences max** for better UX
 
 ## User Preferences
 

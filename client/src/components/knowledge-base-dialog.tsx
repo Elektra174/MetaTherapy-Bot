@@ -277,14 +277,14 @@ interface ScriptCardProps {
 
 function ScriptCard({ script, isExpanded, onToggle, onDelete, isDeleting }: ScriptCardProps) {
   return (
-    <div className="border rounded-lg overflow-hidden" data-testid={`script-card-${script.id}`}>
+    <div className="border rounded-lg" data-testid={`script-card-${script.id}`}>
       <div className="flex items-center">
         <button
           className="flex-1 flex items-center gap-3 p-4 text-left hover:bg-muted/50 transition-colors"
           onClick={onToggle}
         >
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 shrink-0" />
+            <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
           ) : (
             <ChevronRight className="h-4 w-4 shrink-0" />
           )}
@@ -327,12 +327,12 @@ function ScriptCard({ script, isExpanded, onToggle, onDelete, isDeleting }: Scri
         )}
       </div>
       
-      {isExpanded && (
-        <div className="px-4 pb-4 pt-0 border-t">
-          <div className="prose prose-sm dark:prose-invert max-w-none mt-3">
-            <pre className="whitespace-pre-wrap text-sm leading-relaxed bg-muted/50 p-4 rounded-md font-sans">
+      {isExpanded && script.content && (
+        <div className="border-t bg-muted/30">
+          <div className="p-4">
+            <div className="text-sm leading-relaxed whitespace-pre-wrap font-sans text-foreground">
               {script.content}
-            </pre>
+            </div>
           </div>
         </div>
       )}
