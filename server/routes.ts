@@ -1,7 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
-import { mptKnowledgeBase, mptSystemPrompt, mptAnalysisPrompt } from "./mpt-knowledge";
-import { chatRequestSchema, analysisRequestSchema } from "@shared/schema";
+import { mptSystemPrompt, mptAnalysisPrompt } from "./mpt-knowledge";
+import { chatRequestSchema, analysisRequestSchema, createScriptSchema } from "@shared/schema";
+import { getAllScripts, addScript, deleteScript, searchScripts, findRelevantScriptsForChat } from "./script-storage";
 import { z } from "zod";
 
 const CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions";
@@ -80,59 +81,66 @@ async function callCerebrasAPI(messages: CerebrasMessage[]): Promise<string> {
   }
 }
 
-function findRelevantScripts(message: string, limit: number = 3) {
-  const searchTerms = message.toLowerCase().split(/\s+/).filter(term => term.length > 3);
-  
-  const scoredScripts = mptKnowledgeBase.map(script => {
-    let score = 0;
-    const titleLower = script.title.toLowerCase();
-    const contentLower = script.content.toLowerCase();
-    const categoryLower = script.category.toLowerCase();
-    
-    for (const term of searchTerms) {
-      if (titleLower.includes(term)) score += 10;
-      if (categoryLower.includes(term)) score += 5;
-      if (script.tags.some(tag => tag.toLowerCase().includes(term))) score += 7;
-      if (contentLower.includes(term)) score += 2;
-    }
-    
-    const keyTerms = ['стратегия', 'потребност', 'идентичност', 'запрос', 'эмоци', 'тело', 'интеграц', 'метапозиц', 'сессия', 'принцип'];
-    for (const key of keyTerms) {
-      if (message.toLowerCase().includes(key)) {
-        if (titleLower.includes(key) || contentLower.includes(key) || script.tags.some(t => t.toLowerCase().includes(key))) {
-          score += 5;
-        }
-      }
-    }
-    
-    return { script, score };
-  });
-  
-  return scoredScripts
-    .filter(s => s.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map(s => s.script);
-}
-
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
-  app.get("/api/knowledge-base", (_req: Request, res: Response) => {
-    res.json(mptKnowledgeBase);
+  app.get("/api/knowledge-base", async (_req: Request, res: Response) => {
+    try {
+      const scripts = await getAllScripts();
+      res.json(scripts);
+    } catch (error) {
+      console.error("Error fetching scripts:", error);
+      res.status(500).json({ error: "Ошибка загрузки базы знаний" });
+    }
   });
 
-  app.get("/api/knowledge-base/search", (req: Request, res: Response) => {
-    const query = (req.query.q as string) || "";
-    if (!query.trim()) {
-      res.json(mptKnowledgeBase);
-      return;
+  app.get("/api/knowledge-base/search", async (req: Request, res: Response) => {
+    try {
+      const query = (req.query.q as string) || "";
+      const results = await searchScripts(query, 10);
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching scripts:", error);
+      res.status(500).json({ error: "Ошибка поиска" });
     }
-    
-    const results = findRelevantScripts(query, 10);
-    res.json(results);
+  });
+
+  app.post("/api/knowledge-base", async (req: Request, res: Response) => {
+    try {
+      const validatedData = createScriptSchema.parse(req.body);
+      const newScript = await addScript(validatedData);
+      res.status(201).json(newScript);
+    } catch (error) {
+      console.error("Error adding script:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: error.errors[0]?.message || "Ошибка валидации" });
+      } else {
+        res.status(500).json({ error: "Ошибка добавления скрипта" });
+      }
+    }
+  });
+
+  app.delete("/api/knowledge-base/:id", async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      
+      if (!id.startsWith("custom-")) {
+        res.status(400).json({ error: "Можно удалять только пользовательские скрипты" });
+        return;
+      }
+
+      const success = await deleteScript(id);
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Скрипт не найден" });
+      }
+    } catch (error) {
+      console.error("Error deleting script:", error);
+      res.status(500).json({ error: "Ошибка удаления скрипта" });
+    }
   });
 
   app.post("/api/chat", async (req: Request, res: Response) => {
@@ -142,7 +150,7 @@ export async function registerRoutes(
 
       const systemPrompt = mode === "therapy" ? mptSystemPrompt : mptAnalysisPrompt;
 
-      const relevantScripts = findRelevantScripts(message, 2);
+      const relevantScripts = await findRelevantScriptsForChat(message, 2);
 
       let contextInfo = "";
       if (relevantScripts.length > 0) {
@@ -215,13 +223,22 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/health", (_req: Request, res: Response) => {
-    const hasApiKey = !!process.env.CEREBRAS_API_KEY;
-    res.json({ 
-      status: hasApiKey ? "ok" : "missing_api_key",
-      timestamp: new Date().toISOString(),
-      scriptsCount: mptKnowledgeBase.length,
-    });
+  app.get("/api/health", async (_req: Request, res: Response) => {
+    try {
+      const hasApiKey = !!process.env.CEREBRAS_API_KEY;
+      const scripts = await getAllScripts();
+      res.json({ 
+        status: hasApiKey ? "ok" : "missing_api_key",
+        timestamp: new Date().toISOString(),
+        scriptsCount: scripts.length,
+      });
+    } catch (error) {
+      res.json({ 
+        status: "error",
+        timestamp: new Date().toISOString(),
+        scriptsCount: 0,
+      });
+    }
   });
 
   return httpServer;
