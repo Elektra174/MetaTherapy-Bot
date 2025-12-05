@@ -4,6 +4,25 @@
 
 MPT Therapist is an AI-powered chatbot designed to assist psychologists practicing Meta-Personal Therapy (MPT). The application provides two core modes: conducting therapeutic sessions with guided MPT scripts, and analyzing completed therapy sessions. Built as a full-stack TypeScript application with React frontend and Express backend, it leverages the Cerebras AI API for natural language processing while maintaining therapeutic context through MPT knowledge bases.
 
+## Recent Changes
+
+**December 5, 2024 - Script Management System**
+- Added PostgreSQL-backed custom script storage (`custom_scripts` table)
+- Created script storage API with CRUD endpoints (`/api/knowledge-base`)
+- Scripts distinguished by `isCustom` flag (static vs user-added)
+- Chat uses combined static + custom scripts for AI responses
+- Knowledge base dialog updated with add/delete functionality for custom scripts
+
+**December 5, 2024 - Replit Environment Setup**
+- Created missing `shared/schema.ts` with all TypeScript types and Zod schemas
+- Added `.gitignore` with proper Node.js exclusions
+- Configured workflow to run dev server on port 5000
+- Set up deployment configuration for autoscale with build and start commands
+- Verified frontend loads correctly with proxy configuration for Replit environment
+- Application requires `CEREBRAS_API_KEY` secret (configured)
+- **Updated AI prompt to ask questions one at a time** (not all at once)
+- **Shortened AI responses to 2-3 sentences max** for better UX
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -67,22 +86,22 @@ Preferred communication style: Simple, everyday language.
 ### Database Strategy
 
 **Current State**
-- No active database connection
-- Drizzle ORM configured for PostgreSQL (ready for future use)
-- Schema defined in `shared/schema.ts` with users table
-- Migration setup with `drizzle-kit`
+- PostgreSQL database active via Drizzle ORM
+- Custom scripts stored in `custom_scripts` table
+- Schema defined in `shared/schema.ts` with users and custom_scripts tables
 
-**Prepared Schema**
+**Active Schema**
 ```typescript
 - users table: id, username, password
+- custom_scripts table: id, title, category, content, tags
+- MPTScript interface: id, title, category, content, tags, isCustom
 - Session interface: id, title, messages, timestamps, mode, status
 - ChatMessage interface: id, role, content, timestamp, scriptReference
-- MPTScript interface: id, title, category, content, tags
 ```
 
-**Migration Path**
-- Environment variable `DATABASE_URL` configured but optional
-- Schema ready for Postgres deployment
+**Database Configuration**
+- Environment variable `DATABASE_URL` required for script persistence
+- Drizzle ORM with pg driver for database operations
 - Connect-pg-simple available for session storage
 - Drizzle Zod integration for runtime validation
 
@@ -128,3 +147,22 @@ Preferred communication style: Simple, everyday language.
 - Server dependencies bundled (allowlist in `build.ts`)
 - Static file serving in production
 - Node.js runtime
+- Deployment configured for autoscale (stateless frontend)
+- Build command: `npm run build`
+- Start command: `npm start`
+
+## Setup Instructions
+
+### Required Configuration
+1. **CEREBRAS_API_KEY** (required): Add your Cerebras AI API key as a secret for chat functionality
+2. **DATABASE_URL** (optional): Already provisioned but not currently used by the application
+
+### Development
+- Run `npm run dev` to start the development server on port 5000
+- Frontend configured with `allowedHosts: true` for Replit proxy compatibility
+- Server binds to `0.0.0.0:5000` for external access
+
+### Production Deployment
+- Build: `npm run build` (bundles client with Vite and server with esbuild)
+- Start: `npm start` (serves production build)
+- Deployment target: autoscale (stateless application)
