@@ -6,16 +6,17 @@ MPT Therapist is an AI-powered chatbot designed to assist psychologists practici
 
 ## Recent Changes
 
-**December 5, 2024 - Replit Environment Setup (GitHub Import)**
+**December 5, 2025 - Replit Environment Setup (GitHub Import - Complete)**
 - Created missing `shared/schema.ts` with all TypeScript types and Zod schemas
-- Added `.gitignore` with proper Node.js exclusions
-- Installed all npm dependencies
-- Provisioned PostgreSQL database and pushed schema using Drizzle
-- Configured workflow "Start application" to run dev server on port 5000
-- Set up deployment configuration for autoscale deployment target
-- Verified frontend loads correctly with Vite proxy configuration for Replit environment
-- Application requires `CEREBRAS_API_KEY` secret (now configured and working)
-- Server properly configured to bind to `0.0.0.0:5000` with `allowedHosts: true`
+- Added `.gitignore` with proper Node.js exclusions  
+- Installed all npm dependencies via npm install
+- Provisioned PostgreSQL database and pushed schema using Drizzle (`npm run db:push`)
+- Configured Vite server with `allowedHosts: true` for Replit proxy compatibility
+- Configured workflow "Start application" to run dev server on port 5000 with webview output
+- Set up deployment configuration for autoscale deployment target with build and start commands
+- Verified frontend loads correctly - UI displays in Russian with MPT Therapist branding
+- Application requires `CEREBRAS_API_KEY` secret to be added by user for AI functionality
+- Server properly configured to bind to `0.0.0.0:5000` 
 - All systems operational and ready for use
 
 **December 5, 2024 - Comprehensive MPT Knowledge Base Integration**
